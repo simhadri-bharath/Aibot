@@ -1,5 +1,6 @@
 import ProjectModel from '../models/project.model.js';
 
+import mongoose  from 'mongoose';
 export const createProject = async ({name, userId}) => {
     if (!name) {
         console.log('Name is undefined');
@@ -18,4 +19,50 @@ export const createProject = async ({name, userId}) => {
         throw error;
     }
     return project;
+}
+export const getAllProjectsByUserId = async ({userId}) => {
+    if (!userId) {
+        throw new Error('User Id is required');
+    }
+    const projects = await ProjectModel.find({users: userId});
+    return projects;
+}
+export const addUserToProject = async ({projectId, users, userId}) => {
+    if(!projectId){
+        throw new Error('Project Id is required');
+    }
+    if(!mongoose.Types.ObjectId.isValid(projectId)){
+        throw new Error('Project Id is invalid');
+    }
+    if(!users){
+        throw new Error('Users are required');
+    }
+    if(!userId){
+        throw new Error('User Id is required');
+    }
+    if(!Array.isArray(users) || users.some(userId => !mongoose.Types.ObjectId.isValid(userId))){
+        throw new Error('Users are invalid');
+    }
+    if(!mongoose.Types.ObjectId.isValid(userId)){
+        throw new Error("Invalid user");
+    }
+    const project=await ProjectModel.findOne({
+        _id:projectId,
+        users:userId
+    });
+    if(!project){
+        throw new Error("User not belong to this project");
+    }
+    const updatedProject=await ProjectModel.findOneAndUpdate({
+        _id:projectId},
+        {
+            $addToSet:{
+                users:{
+                    $each:users
+                }
+            }
+        },
+        {new:true}
+    )
+    return updatedProject
 }
