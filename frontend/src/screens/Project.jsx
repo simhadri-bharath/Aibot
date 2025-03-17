@@ -288,33 +288,7 @@ const Project = () => {
     useEffect(()=>{
         scrollToBottom();
     },[messages]);
-
-    function appendIncomingMessage({ sender, message }) {
-        const msgDiv = document.createElement('div')
-        if (sender._id == '@ai') {
-            const markDown = (<Markdown>{message}</Markdown>)
-            // const markDown=marked(message);
-            msgDiv.className = 'message max-w-56 flex flex-col p-2 bg-slate-50 w-fit rounded-md'
-            msgDiv.innerHTML = ` <small class='opacity-65text-xs'>${sender.email}</small>
-             <p class='text-sm'>${markDown}</p>
-             `
-
-        }
-        else {
-            msgDiv.className = 'message max-w-56 flex flex-col p-2 bg-slate-50 w-fit rounded-md'
-            msgDiv.innerHTML = `<small class='opacity-65 text-xs'>${sender.email}</small><p class='text-sm'>${message}</p>`
-        }
-        messageBox.current.appendChild(msgDiv)
-        scrollToBottom()
-    }
-
-    function appendOutgoingMessage(message) {
-        const msgDiv = document.createElement('div')
-        msgDiv.className = 'ml-auto max-w-56 message flex flex-col p-2 bg-slate-50 w-fit rounded-md'
-        msgDiv.innerHTML = `<small class='opacity-65 text-xs'>${user.email}</small><p class='text-sm'>${message}</p>`
-        messageBox.current.appendChild(msgDiv)
-        scrollToBottom()
-    }
+    //remove append incoming and appendougoing functions
 
     function scrollToBottom() {
         messageBox.current.scrollTop = messageBox.current.scrollHeight
