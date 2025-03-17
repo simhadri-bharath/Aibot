@@ -231,6 +231,8 @@ import { useLocation } from 'react-router-dom'
 import axios from '../config/axios'
 import { initializeSocket, receiveMessage, sendMessage } from '../config/socket'
 import '../index.css'
+import Markdown from'markdown-to-jsx';
+// import marked from 'marked';
 
 const Project = () => {
     const location = useLocation()
@@ -281,8 +283,19 @@ const Project = () => {
 
     function appendIncomingMessage({ sender, message }) {
         const msgDiv = document.createElement('div')
-        msgDiv.className = 'message max-w-56 flex flex-col p-2 bg-slate-50 w-fit rounded-md'
-        msgDiv.innerHTML = `<small class='opacity-65 text-xs'>${sender.email}</small><p class='text-sm'>${message}</p>`
+        if(sender._id=='@ai'){
+            const markDown = (<Markdown>{message}</Markdown>)
+            // const markDown=marked(message);
+            msgDiv.className = 'message max-w-56 flex flex-col p-2 bg-slate-50 w-fit rounded-md'
+            msgDiv.innerHTML=` <small class='opacity-65text-xs'>${sender.email}</small>
+             <p class='text-sm'>${markDown}</p>
+             `
+
+        }
+        else{
+            msgDiv.className = 'message max-w-56 flex flex-col p-2 bg-slate-50 w-fit rounded-md'
+            msgDiv.innerHTML = `<small class='opacity-65 text-xs'>${sender.email}</small><p class='text-sm'>${message}</p>`
+        }
         messageBox.current.appendChild(msgDiv)
         scrollToBottom()
     }
