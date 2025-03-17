@@ -231,7 +231,7 @@ import { useLocation } from 'react-router-dom'
 import axios from '../config/axios'
 import { initializeSocket, receiveMessage, sendMessage } from '../config/socket'
 import '../index.css'
-import Markdown from'markdown-to-jsx';
+import Markdown from 'markdown-to-jsx';
 // import marked from 'marked';
 
 const Project = () => {
@@ -244,6 +244,7 @@ const Project = () => {
     const { user } = useContext(UserContext)
     const messageBox = React.useRef()
     const [users, setUsers] = useState([])
+    const [messages, setMessages] = useState([]); //state variable for mesaages
 
     const handleUserClick = (id) => {
         setSelectedUserId(prevSelectedUserId => {
@@ -264,14 +265,17 @@ const Project = () => {
 
     const send = () => {
         sendMessage('project-message', { message, sender: user })
-        appendOutgoingMessage(message)
+        // appendOutgoingMessage(message)
+        setMessages(prevMessages => [ ...prevMessages, { sender: user, message } ]) // Update messages state
         setMessage("")
     }
 
     useEffect(() => {
         const socket = initializeSocket(project._id)
-        receiveMessage('project-message', appendIncomingMessage)
-
+        // receiveMessage('project-message', appendIncomingMessage)
+        receiveMessage('project-message', data => {
+            setMessages(prevMessages => [ ...prevMessages, data ]) // Update messages state
+         })
         axios.get(`/projects/get-project/${location.state.project._id}`).then(res => {
             setProject(res.data.project)
         }).catch(console.log)
@@ -280,19 +284,23 @@ const Project = () => {
 
         return () => socket.disconnect()
     }, [])
+    
+    useEffect(()=>{
+        scrollToBottom();
+    },[messages]);
 
     function appendIncomingMessage({ sender, message }) {
         const msgDiv = document.createElement('div')
-        if(sender._id=='@ai'){
+        if (sender._id == '@ai') {
             const markDown = (<Markdown>{message}</Markdown>)
             // const markDown=marked(message);
             msgDiv.className = 'message max-w-56 flex flex-col p-2 bg-slate-50 w-fit rounded-md'
-            msgDiv.innerHTML=` <small class='opacity-65text-xs'>${sender.email}</small>
+            msgDiv.innerHTML = ` <small class='opacity-65text-xs'>${sender.email}</small>
              <p class='text-sm'>${markDown}</p>
              `
 
         }
-        else{
+        else {
             msgDiv.className = 'message max-w-56 flex flex-col p-2 bg-slate-50 w-fit rounded-md'
             msgDiv.innerHTML = `<small class='opacity-65 text-xs'>${sender.email}</small><p class='text-sm'>${message}</p>`
         }
@@ -325,7 +333,23 @@ const Project = () => {
                     </button>
                 </div>
                 <div className="conversation-area relative flex flex-col flex-grow h-full overflow-hidden">
-                    <div ref={messageBox} className="message-box p-1 flex-grow flex flex-col gap-1 overflow-y-auto max-h-full scrollbar-hide"></div>
+                    <div ref={messageBox} className="message-box p-1 flex-grow flex flex-col gap-1 overflow-y-auto max-h-full scrollbar-hide">
+                        {messages.map((msg, index) => (
+                            <div key={index} className={`${msg.sender._id === 'ai' ? 'max-w-80' : 'max-w-54'} ${msg.sender._id == user._id.toString() && 'ml-auto'}  message flex flex-col p-2 bg-slate-50 w-fit rounded-md`}>
+                                <small className='opacity-65 text-xs'>{msg.sender.email}</small>
+                                <p className='text-sm'>
+                                    {msg.sender._id === 'ai' ?
+
+                                        <div
+                                            className='overflow-auto bg-slate-950 text-white rounded-sm p-2'
+                                        >
+                                            <Markdown>{msg.message}</Markdown>
+                                        </div>
+                                        : msg.message}
+                                </p>
+                            </div>
+                        ))}
+                    </div>
                     <div className="inputField w-full flex">
                         <input
                             value={message}
