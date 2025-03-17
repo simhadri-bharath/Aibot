@@ -225,14 +225,28 @@
 
 // export default Project
 
-import React, { useState, useEffect, useContext } from 'react'
+import React, { useState, useEffect, useContext, useRef } from 'react'
 import { UserContext } from '../context/user.context'
 import { useLocation } from 'react-router-dom'
 import axios from '../config/axios'
 import { initializeSocket, receiveMessage, sendMessage } from '../config/socket'
 import '../index.css'
 import Markdown from 'markdown-to-jsx';
-// import marked from 'marked';
+import { use } from 'react';
+function SyntaxHighlightedCode(props) {
+    const ref = useRef(null)
+
+    React.useEffect(() => {
+        if (ref.current && props.className?.includes('lang-') && window.hljs) {
+            window.hljs.highlightElement(ref.current)
+
+            // hljs won't reprocess the element unless this attribute is removed
+            ref.current.removeAttribute('data-highlighted')
+        }
+    }, [props.className, props.children])
+
+    return <code {...props} ref={ref} />
+}
 
 const Project = () => {
     const location = useLocation()
@@ -266,7 +280,7 @@ const Project = () => {
     const send = () => {
         sendMessage('project-message', { message, sender: user })
         // appendOutgoingMessage(message)
-        setMessages(prevMessages => [ ...prevMessages, { sender: user, message } ]) // Update messages state
+        setMessages(prevMessages => [...prevMessages, { sender: user, message }]) // Update messages state
         setMessage("")
     }
 
@@ -274,8 +288,8 @@ const Project = () => {
         const socket = initializeSocket(project._id)
         // receiveMessage('project-message', appendIncomingMessage)
         receiveMessage('project-message', data => {
-            setMessages(prevMessages => [ ...prevMessages, data ]) // Update messages state
-         })
+            setMessages(prevMessages => [...prevMessages, data]) // Update messages state
+        })
         axios.get(`/projects/get-project/${location.state.project._id}`).then(res => {
             setProject(res.data.project)
         }).catch(console.log)
@@ -284,10 +298,10 @@ const Project = () => {
 
         return () => socket.disconnect()
     }, [])
-    
-    useEffect(()=>{
+
+    useEffect(() => {
         scrollToBottom();
-    },[messages]);
+    }, [messages]);
     //remove append incoming and appendougoing functions
 
     function scrollToBottom() {
@@ -317,7 +331,14 @@ const Project = () => {
                                         <div
                                             className='overflow-auto bg-slate-950 text-white rounded-sm p-2'
                                         >
-                                            <Markdown>{msg.message}</Markdown>
+                                            <Markdown
+                                                children={msg.message}
+                                                options={{
+                                                    overrides: {
+                                                        code: SyntaxHighlightedCode,
+                                                    },
+                                                }}
+                                            />
                                         </div>
                                         : msg.message}
                                 </p>
