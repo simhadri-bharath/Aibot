@@ -233,6 +233,7 @@ import { initializeSocket, receiveMessage, sendMessage } from '../config/socket'
 import '../index.css'
 import Markdown from 'markdown-to-jsx';
 import { use } from 'react';
+import hljs from 'highlight.js';
 function SyntaxHighlightedCode(props) {
     const ref = useRef(null)
 
@@ -292,8 +293,9 @@ const Project = () => {
         const socket = initializeSocket(project._id)
         // receiveMessage('project-message', appendIncomingMessage)
         receiveMessage('project-message', data => {
-            const message =JSON.parse(data.message)
-            if(message.fileTree){
+            const message = JSON.parse(data.message)
+            console.log(message);
+            if (message.fileTree) {
                 setFileTree(message.fileTree);
             }
             setMessages(prevMessages => [...prevMessages, data]) // Update messages state
@@ -356,7 +358,7 @@ const Project = () => {
                                 <div className='text-sm'>
                                     {msg.sender._id === 'ai' ?
                                         WriteAiMessage(msg.message)
-                                        : msg.message}
+                                        : <p>{ msg.message}</p>}
                                 </div>
                             </div>
                         ))}
@@ -396,10 +398,12 @@ const Project = () => {
                     <div className="file-tree w-full">
                         {
                             Object.keys(fileTree).map((file, index) => (
-                                <button onClick={() => {
-                                    setCurrentFile(file)
-                                    setOpenFiles([...new Set([...openFiles, file])])
-                                }}
+                                <button
+                                    key={index}
+                                    onClick={() => {
+                                        setCurrentFile(file)
+                                        setOpenFiles([...new Set([...openFiles, file])])
+                                    }}
                                     className='tree-element cursor-pointer p-2 px-4 flex items-center gap-2 bg-slate-300 w-full'
                                 >
                                     <p className='font-semibold'>{file}</p>
@@ -409,30 +413,50 @@ const Project = () => {
                     </div>
                 </div>
                 {currentFile && (
-                    <div className="code-editor flex flex-col flex-grow h-full">
+                    <div className="code-editor flex flex-col flex-grow h-full shrink">
                         <div className="top flex">
                             {
-                                openFiles.map((file,index)=>(
+                                openFiles.map((file, index) => (
                                     <button
-                                    onClick={()=>setCurrentFile(file)}
-                                    className={`open-file cursor-pointer p-2 px-4 flex items-center w-fit gap-2 bg-slate-300 ${currentFile === file ? 'bg-slate-400' : ''}`}>
+                                        key={index}
+                                        onClick={() => setCurrentFile(file)}
+                                        className={`open-file cursor-pointer p-2 px-4 flex items-center w-fit gap-2 bg-slate-300 ${currentFile === file ? 'bg-slate-400' : ''}`}>
                                         <p className='font-semibold text-lg'>{file}</p>
                                     </button>
                                 ))
                             }
                         </div>
-                        <div className="bottom flex flex-grow">
+                        <div className="bottom flex flex-grow max-w-full  overflow-auto">
                             {
                                 fileTree[currentFile] && (
-                                    <textarea
-                                    value={fileTree[currentFile].content}
-                                    onChange={()=>{
-                                        setFileTree({
-                                            ...fileTree,[currentFile]:{content:e.target.value}
-                                        })
-                                    }}
-                                    className='w-full h-full p-4 bg-slate-50 outline-none border-none'
-                                    ></textarea>
+                                    <div className="code-editor-area h-full overflow-auto flex-grow bg-slate-50 ">
+                                        <pre
+                                            className='hljs h-full'
+                                        >
+                                            < code
+                                                className='hljs h-full outline-none'
+                                                contentEditable
+                                                suppressContentEditableWarning
+                                                onBlur={(e) => {
+                                                    const updatedContent = e.target.innerText;
+                                                    setFileTree(prevFileTree => ({
+                                                        ...prevFileTree,
+                                                        [currentFile]: {
+                                                            ...prevFileTree[currentFile],
+                                                            content: updatedContent
+                                                        }
+                                                    }));
+                                                }}
+                                                dangerouslySetInnerHTML={{ __html: hljs.highlight('javascript', fileTree[currentFile].content).value }}
+                                                style={{
+                                                    whiteSpace: 'pre-wrap',
+                                                    paddingBottom: '25rem',
+                                                    counterSet: 'line-numbering',
+                                                }}
+                                            />
+                                        </pre>
+
+                                    </div>
                                 )
                             }
                         </div>
