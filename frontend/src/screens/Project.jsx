@@ -234,6 +234,7 @@ import '../index.css'
 import Markdown from 'markdown-to-jsx';
 import { use } from 'react';
 import hljs from 'highlight.js';
+import { getWebContainer } from '../config/webContainer'
 function SyntaxHighlightedCode(props) {
     const ref = useRef(null)
 
@@ -265,6 +266,8 @@ const Project = () => {
     const [currentFile, setCurrentFile] = useState(null)
     const [openFiles, setOpenFiles] = useState([]);
 
+    const [webContainer,setWebContainer]=useState(null);
+
     const handleUserClick = (id) => {
         setSelectedUserId(prevSelectedUserId => {
             const newSelectedUserId = new Set(prevSelectedUserId);
@@ -291,10 +294,20 @@ const Project = () => {
 
     useEffect(() => {
         const socket = initializeSocket(project._id)
+
+        if(!webContainer){
+            getWebContainer().then(container=>{
+                setWebContainer(container)
+                console.log("container started");
+            })
+        }
         // receiveMessage('project-message', appendIncomingMessage)
         receiveMessage('project-message', data => {
             const message = JSON.parse(data.message)
             console.log(message);
+
+            webContainer.mount(message.fileTree);
+
             if (message.fileTree) {
                 setFileTree(message.fileTree);
             }
@@ -447,7 +460,7 @@ const Project = () => {
                                                         }
                                                     }));
                                                 }}
-                                                dangerouslySetInnerHTML={{ __html: hljs.highlight('javascript', fileTree[currentFile].content).value }}
+                                                dangerouslySetInnerHTML={{ __html: hljs.highlight('javascript', fileTree[currentFile].file.contents).value }}
                                                 style={{
                                                     whiteSpace: 'pre-wrap',
                                                     paddingBottom: '25rem',
