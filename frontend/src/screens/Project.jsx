@@ -259,19 +259,11 @@ const Project = () => {
     const messageBox = React.useRef()
     const [users, setUsers] = useState([])
     const [messages, setMessages] = useState([]); //state variable for mesaages
-    const [fileTree, setFileTree] = useState({
-        "app.js": {
-            content: `const express = require('express');`
-        },
-        "package.json": {
-            content: `{
-                        "name": "temp-server",
-                        }`
-        }
-    })
+    const [fileTree, setFileTree] = useState({})
 
     const [currentFile, setCurrentFile] = useState(null)
     const [openFiles, setOpenFiles] = useState([]);
+
     const handleUserClick = (id) => {
         setSelectedUserId(prevSelectedUserId => {
             const newSelectedUserId = new Set(prevSelectedUserId);
@@ -300,6 +292,10 @@ const Project = () => {
         const socket = initializeSocket(project._id)
         // receiveMessage('project-message', appendIncomingMessage)
         receiveMessage('project-message', data => {
+            const message =JSON.parse(data.message)
+            if(message.fileTree){
+                setFileTree(message.fileTree);
+            }
             setMessages(prevMessages => [...prevMessages, data]) // Update messages state
         })
         axios.get(`/projects/get-project/${location.state.project._id}`).then(res => {

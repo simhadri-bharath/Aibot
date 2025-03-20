@@ -58,6 +58,8 @@ app.listen(3000, () => {
 
 
     ",
+},
+},
 
     "buildCommand":{
     mainItem:"npm",
@@ -69,9 +71,7 @@ app.listen(3000, () => {
     commands:["app.js"]
 }
     
-}
-    
-    }
+
     }
     </example>
 
