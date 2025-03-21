@@ -266,7 +266,7 @@ const Project = () => {
     const [currentFile, setCurrentFile] = useState(null)
     const [openFiles, setOpenFiles] = useState([]);
 
-    const [webContainer,setWebContainer]=useState(null);
+    const [webContainer, setWebContainer] = useState(null);
 
     const handleUserClick = (id) => {
         setSelectedUserId(prevSelectedUserId => {
@@ -295,24 +295,37 @@ const Project = () => {
     useEffect(() => {
         const socket = initializeSocket(project._id)
 
-        if(!webContainer){
-            getWebContainer().then(container=>{
+        if (!webContainer) {
+            getWebContainer().then(container => {
                 setWebContainer(container)
                 console.log("container started");
             })
         }
         // receiveMessage('project-message', appendIncomingMessage)
         receiveMessage('project-message', data => {
-            const message = JSON.parse(data.message)
-            console.log(message);
 
-            webContainer.mount(message.fileTree);
+            console.log(data)
+            
+            if (data.sender._id == 'ai') {
 
-            if (message.fileTree) {
-                setFileTree(message.fileTree);
+
+                const message = JSON.parse(data.message)
+
+                console.log(message)
+
+                webContainer?.mount(message.fileTree)
+
+                if (message.fileTree) {
+                    setFileTree(message.fileTree || {})
+                }
+                setMessages(prevMessages => [ ...prevMessages, data ]) // Update messages state
+            } else {
+
+
+                setMessages(prevMessages => [ ...prevMessages, data ]) // Update messages state
             }
-            setMessages(prevMessages => [...prevMessages, data]) // Update messages state
         })
+
         axios.get(`/projects/get-project/${location.state.project._id}`).then(res => {
             setProject(res.data.project)
         }).catch(console.log)
@@ -371,7 +384,7 @@ const Project = () => {
                                 <div className='text-sm'>
                                     {msg.sender._id === 'ai' ?
                                         WriteAiMessage(msg.message)
-                                        : <p>{ msg.message}</p>}
+                                        : <p>{msg.message}</p>}
                                 </div>
                             </div>
                         ))}
@@ -427,17 +440,41 @@ const Project = () => {
                 </div>
                 {currentFile && (
                     <div className="code-editor flex flex-col flex-grow h-full shrink">
-                        <div className="top flex">
-                            {
-                                openFiles.map((file, index) => (
-                                    <button
-                                        key={index}
-                                        onClick={() => setCurrentFile(file)}
-                                        className={`open-file cursor-pointer p-2 px-4 flex items-center w-fit gap-2 bg-slate-300 ${currentFile === file ? 'bg-slate-400' : ''}`}>
-                                        <p className='font-semibold text-lg'>{file}</p>
-                                    </button>
-                                ))
-                            }
+                        <div className="top flex justify-between w-full">
+                            <div className="files flex">
+                                {
+                                    openFiles.map((file, index) => (
+                                        <button
+                                            key={index}
+                                            onClick={() => setCurrentFile(file)}
+                                            className={`open-file cursor-pointer p-2 px-4 flex items-center w-fit gap-2 bg-slate-300 ${currentFile === file ? 'bg-slate-400' : ''}`}>
+                                            <p className='font-semibold text-lg'>{file}</p>
+                                        </button>
+                                    ))
+                                }
+                            </div>
+                            <div className="actions flex gap-2">
+                                <button
+                                    onClick={async () => {
+                                        await webContainer.mount(fileTree)
+                                        const installProcess = await webContainer.spawn("npm", ["install"])
+                                        installProcess.output.pipeTo(new WritableStream({
+                                            write(chunk) {
+                                                console.log(chunk)
+                                            }
+                                        }))
+                                        const runProcess = await webContainer.spawn("npm", ["start"])
+                                        runProcess.output.pipeTo(new WritableStream({
+                                            write(chunk) {
+                                                console.log(chunk)
+                                            }
+                                        }))
+                                    }}
+                                    className='p-2 px-4 bg-slate-300 text-white'
+                                >
+                                    run
+                                </button>
+                            </div>
                         </div>
                         <div className="bottom flex flex-grow max-w-full  overflow-auto">
                             {
