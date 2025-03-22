@@ -6,6 +6,9 @@ const UserAuth = ({ children }) => {
 
     const { user } = useContext(UserContext)
     const [ loading, setLoading ] = useState(true)
+    // useEffect(()=>{
+    //     const token = localStorage.getItem('token')
+    // },[])
     const token = localStorage.getItem('token')
     const navigate = useNavigate()
 
