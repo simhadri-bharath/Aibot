@@ -269,6 +269,8 @@ const Project = () => {
     const [webContainer, setWebContainer] = useState(null);
     const [iframeUrl, setIframeUrl] = useState(null);
 
+    const [runProcess, setRunProcess] = useState(null);
+
     const handleUserClick = (id) => {
         setSelectedUserId(prevSelectedUserId => {
             const newSelectedUserId = new Set(prevSelectedUserId);
@@ -422,148 +424,164 @@ const Project = () => {
             </section>
             <section className="right  bg-red-50 flex-grow h-full flex">
 
-<div className="explorer h-full max-w-64 min-w-52 bg-slate-200">
-    <div className="file-tree w-full">
-        {
-            Object.keys(fileTree).map((file, index) => (
-                <button
-                    key={index}
-                    onClick={() => {
-                        setCurrentFile(file)
-                        setOpenFiles([ ...new Set([ ...openFiles, file ]) ])
-                    }}
-                    className="tree-element cursor-pointer p-2 px-4 flex items-center gap-2 bg-slate-300 w-full">
-                    <p
-                        className='font-semibold text-lg'
-                    >{file}</p>
-                </button>))
+                <div className="explorer h-full max-w-64 min-w-52 bg-slate-200">
+                    <div className="file-tree w-full">
+                        {
+                            Object.keys(fileTree).map((file, index) => (
+                                <button
+                                    key={index}
+                                    onClick={() => {
+                                        setCurrentFile(file)
+                                        setOpenFiles([...new Set([...openFiles, file])])
+                                    }}
+                                    className="tree-element cursor-pointer p-2 px-4 flex items-center gap-2 bg-slate-300 w-full">
+                                    <p
+                                        className='font-semibold text-lg'
+                                    >{file}</p>
+                                </button>))
 
-        }
-    </div>
-
-</div>
-
-
-<div className="code-editor flex flex-col flex-grow h-full shrink">
-
-    <div className="top flex justify-between w-full">
-
-        <div className="files flex">
-            {
-                openFiles.map((file, index) => (
-                    <button
-                        key={index}
-                        onClick={() => setCurrentFile(file)}
-                        className={`open-file cursor-pointer p-2 px-4 flex items-center w-fit gap-2 bg-slate-300 ${currentFile === file ? 'bg-slate-400' : ''}`}>
-                        <p
-                            className='font-semibold text-lg'
-                        >{file}</p>
-                    </button>
-                ))
-            }
-        </div>
-
-        <div className="actions flex gap-2">
-            <button
-                onClick={async () => {
-                    await webContainer.mount(fileTree)
-
-
-                    const installProcess = await webContainer.spawn("npm", [ "install" ])
-
-
-
-                    installProcess.output.pipeTo(new WritableStream({
-                        write(chunk) {
-                            console.log(chunk)
                         }
-                    }))
-
-                    const runProcess = await webContainer.spawn("npm", [ "start" ])
-
-                    runProcess.output.pipeTo(new WritableStream({
-                        write(chunk) {
-                            console.log(chunk)
-                        }
-                    }))
-
-                    webContainer.on('server-ready', (port, url) => {
-                        console.log(port, url)
-                        setIframeUrl(url)
-                    })
-
-                }}
-                className='p-2 px-4 bg-slate-300 text-white'
-            >
-                run
-            </button>
-
-
-        </div>
-    </div>
-    <div className="bottom flex flex-grow max-w-full shrink overflow-auto">
-        {
-            fileTree[ currentFile ] && (
-                <div className="code-editor-area h-full overflow-auto flex-grow bg-slate-50">
-                    <pre
-                        className="hljs h-full">
-                        <code
-                            className="hljs h-full outline-none"
-                            contentEditable
-                            suppressContentEditableWarning
-                            onBlur={(e) => {
-                                const updatedContent = e.target.innerText;
-                                setFileTree(prevFileTree => ({
-                                    ...prevFileTree,
-                                    [ currentFile ]: {
-                                        ...prevFileTree[ currentFile ],
-                                        content: updatedContent
-                                    }
-                                }));
-                            }}
-                            dangerouslySetInnerHTML={{ __html: hljs.highlight('javascript', fileTree[ currentFile ].file.contents).value }}
-                            style={{
-                                whiteSpace: 'pre-wrap',
-                                paddingBottom: '25rem',
-                                counterSet: 'line-numbering',
-                            }}
-                        />
-                    </pre>
-                </div>
-            )
-        }
-    </div>
-
-</div>
-
-{iframeUrl && webContainer &&
-    <iframe src={iframeUrl} className="w-1/2 h-full"></iframe>
-}
-
-
-</section>
-
-            {isModalOpen && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-                    <div className="bg-white p-4 rounded-md w-96 max-w-full relative">
-                        <header className='flex justify-between items-center mb-4'>
-                            <h2 className='text-xl font-semibold'>Select User</h2>
-                            <button onClick={() => setIsModalOpen(false)} className='p-2'>
-                                <i className="ri-close-fill"></i>
-                            </button>
-                        </header>
-                        <div className="users-list flex flex-col gap-2 mb-16 max-h-96 overflow-auto">
-                            {users.map(user => (
-                                <div key={user._id} onClick={() => handleUserClick(user._id)} className={`user cursor-pointer hover:bg-slate-200 ${selectedUserId.has(user._id) ? 'bg-slate-200' : ""} p-2 flex gap-2 items-center`}>
-                                    <h1 className='font-semibold text-lg'>{user.email}</h1>
-                                </div>
-                            ))}
-                        </div>
-                        <button onClick={addCollaborators} className='absolute bottom-4 left-1/2 transform -translate-x-1/2 px-4 py-2 bg-blue-600 text-white rounded-md'>Add Collaborators</button>
                     </div>
+
                 </div>
-            )}
-        </main>
+
+
+                <div className="code-editor flex flex-col flex-grow h-full shrink">
+
+                    <div className="top flex justify-between w-full">
+
+                        <div className="files flex">
+                            {
+                                openFiles.map((file, index) => (
+                                    <button
+                                        key={index}
+                                        onClick={() => setCurrentFile(file)}
+                                        className={`open-file cursor-pointer p-2 px-4 flex items-center w-fit gap-2 bg-slate-300 ${currentFile === file ? 'bg-slate-400' : ''}`}>
+                                        <p
+                                            className='font-semibold text-lg'
+                                        >{file}</p>
+                                    </button>
+                                ))
+                            }
+                        </div>
+
+                        <div className="actions flex gap-2">
+                            <button
+                                onClick={async () => {
+                                    await webContainer.mount(fileTree)
+
+
+                                    const installProcess = await webContainer.spawn("npm", ["install"])
+
+
+
+                                    installProcess.output.pipeTo(new WritableStream({
+                                        write(chunk) {
+                                            console.log(chunk)
+                                        }
+                                    }))
+
+                                    // const runProcess = await webContainer.spawn("npm", [ "start" ])
+                                    if (runProcess) {
+                                        runProcess.kill();
+                                    }
+                                    let tempProcess = await webContainer.spawn("npm", ["start"]);
+                                    tempProcess.output.pipeTo(new WritableStream({
+                                        write(chunk) {
+                                            console.log(chunk)
+                                        }
+                                    }))
+                                    setRunProcess(tempProcess);
+
+                                    webContainer.on('server-ready', (port, url) => {
+                                        console.log(port, url)
+                                        setIframeUrl(url)
+                                    })
+
+                                }}
+                                className='p-2 px-4 bg-slate-300 text-white'
+                            >
+                                run
+                            </button>
+
+
+                        </div>
+                    </div>
+                    <div className="bottom flex flex-grow max-w-full shrink overflow-auto">
+                        {
+                            fileTree[currentFile] && (
+                                <div className="code-editor-area h-full overflow-auto flex-grow bg-slate-50">
+                                    <pre
+                                        className="hljs h-full">
+                                        <code
+                                            className="hljs h-full outline-none"
+                                            contentEditable
+                                            suppressContentEditableWarning
+                                            onBlur={(e) => {
+                                                const updatedContent = e.target.innerText;
+                                                setFileTree(prevFileTree => ({
+                                                    ...prevFileTree,
+                                                    [currentFile]: {
+                                                        ...prevFileTree[currentFile],
+                                                        file: {
+                                                            ...prevFileTree[currentFile].file,
+                                                            contents: updatedContent
+                                                        }
+                                                    }
+                                                }));
+                                            }}
+                                            dangerouslySetInnerHTML={{ __html: hljs.highlight('javascript', fileTree[currentFile].file.contents).value }}
+                                            style={{
+                                                whiteSpace: 'pre-wrap',
+                                                paddingBottom: '25rem',
+                                                counterSet: 'line-numbering',
+                                            }}
+                                        />
+                                    </pre>
+                                </div>
+                            )
+                        }
+                    </div>
+
+                </div>
+
+                {iframeUrl && webContainer &&
+                    (<div className="flex min-w-96 flex-col h-full">
+                        <div className='address-bar'>
+                            <input type="text"
+                                onChange={(e) => { setIframeUrl(e.target.value) }}
+                                value={iframeUrl} className='w-full p-2 px-4 bg-slate-200' />
+                        </div>
+                        <iframe src={iframeUrl} className='w-full h-full'></iframe>
+                    </div>)
+                }
+
+
+            </section>
+
+            {
+                isModalOpen && (
+                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+                        <div className="bg-white p-4 rounded-md w-96 max-w-full relative">
+                            <header className='flex justify-between items-center mb-4'>
+                                <h2 className='text-xl font-semibold'>Select User</h2>
+                                <button onClick={() => setIsModalOpen(false)} className='p-2'>
+                                    <i className="ri-close-fill"></i>
+                                </button>
+                            </header>
+                            <div className="users-list flex flex-col gap-2 mb-16 max-h-96 overflow-auto">
+                                {users.map(user => (
+                                    <div key={user._id} onClick={() => handleUserClick(user._id)} className={`user cursor-pointer hover:bg-slate-200 ${selectedUserId.has(user._id) ? 'bg-slate-200' : ""} p-2 flex gap-2 items-center`}>
+                                        <h1 className='font-semibold text-lg'>{user.email}</h1>
+                                    </div>
+                                ))}
+                            </div>
+                            <button onClick={addCollaborators} className='absolute bottom-4 left-1/2 transform -translate-x-1/2 px-4 py-2 bg-blue-600 text-white rounded-md'>Add Collaborators</button>
+                        </div>
+                    </div>
+                )
+            }
+        </main >
     )
 }
 
