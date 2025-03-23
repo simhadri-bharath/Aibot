@@ -247,7 +247,7 @@ function SyntaxHighlightedCode(props) {
         }
     }, [props.className, props.children])
 
-    return <code {...props} ref={ref} />
+    return < code {...props} ref={ref} />
 }
 
 const Project = () => {
@@ -331,6 +331,9 @@ const Project = () => {
 
         axios.get(`/projects/get-project/${location.state.project._id}`).then(res => {
             setProject(res.data.project)
+            if(res.data.project.fileTree)
+                setFileTree(res.data.project.fileTree)
+            console.log(fileTree);
         }).catch(console.log)
 
         axios.get('/users/all').then(res => setUsers(res.data.users)).catch(console.log)
@@ -365,7 +368,17 @@ const Project = () => {
             </div>)
     }
 
-
+    function saveFileTree(ft){
+        axios.put('/projects/update-file-tree',{
+            projectId:project._id,
+            fileTree:ft
+        })
+        .then(res=>{
+            console.log(res.data);
+        }).catch(err=>{
+            console.log(err)
+        })
+    }
 
     return (
         <main className='h-screen w-screen flex'>
@@ -517,19 +530,31 @@ const Project = () => {
                                             className="hljs h-full outline-none"
                                             contentEditable
                                             suppressContentEditableWarning
-                                            onBlur={(e) => {
-                                                const updatedContent = e.target.innerText;
-                                                setFileTree(prevFileTree => ({
-                                                    ...prevFileTree,
-                                                    [currentFile]: {
-                                                        ...prevFileTree[currentFile],
-                                                        file: {
-                                                            ...prevFileTree[currentFile].file,
-                                                            contents: updatedContent
+                                            // onBlur={(e) => {
+                                            //     const updatedContent = e.target.innerText;
+                                                // setFileTree(prevFileTree => ({
+                                                //     ...prevFileTree,
+                                                //     [currentFile]: {
+                                                //         ...prevFileTree[currentFile],
+                                                //         file: {
+                                                //             ...prevFileTree[currentFile].file,
+                                                //             contents: updatedContent
+                                                //         }
+                                                //     }
+                                                // }));
+                                                onBlur={(e) => {
+                                                    const updatedContent = e.target.innerText;
+                                                    const ft = {
+                                                        ...fileTree,
+                                                        [ currentFile ]: {
+                                                            file: {
+                                                                contents: updatedContent
+                                                            }
                                                         }
                                                     }
-                                                }));
-                                            }}
+                                                    setFileTree(ft)
+                                                    saveFileTree(ft)
+                                                }}
                                             dangerouslySetInnerHTML={{ __html: hljs.highlight('javascript', fileTree[currentFile].file.contents).value }}
                                             style={{
                                                 whiteSpace: 'pre-wrap',
